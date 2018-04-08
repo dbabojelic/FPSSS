@@ -30,3 +30,12 @@
 *.exe
 *.out
 *.app
+
+# idea
+.idea/
+
+# cmake-build
+cmake-build-debug/
+
+# fasta files
+*.fasta
