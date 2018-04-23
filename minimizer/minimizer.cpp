@@ -12,9 +12,19 @@
 namespace {
     std::unordered_map<minimizer::hashType, int> hashCnt;
     const int BASE = 31;
+    std::unordered_map<char, int> murphy = {{'A', 0},
+                                            {'K', 1}, {'R', 1},
+                                            {'E', 2}, {'D', 2}, {'N', 2}, {'Q', 2},
+                                            {'C', 3},
+                                            {'G', 4},
+                                            {'H', 5},
+                                            {'I', 6}, {'L', 6}, {'V', 6}, {'M', 6},
+                                            {'F', 7}, {'Y', 7}, {'W', 7},
+                                            {'P', 8},
+                                            {'S', 9}, {'T', 9}};
 
     int value(char c) {
-        return c - 'A';
+        return murphy[c];
     }
 
     void push(const minimizer::Minimizer& triple, std::deque<minimizer::Minimizer>& dq) {
@@ -57,6 +67,7 @@ namespace {
 } // namespace
 
 namespace minimizer {
+    
 
     void addMinimizers(const char* target, int targetLen, int targetIndex, int w, int k, 
                        std::unordered_map<hashType, std::vector<Index>>& indexTable) {

@@ -44,9 +44,6 @@ namespace minimizer {
     void addMinimizers(const char* target, int targetLen, int targetIndex, int w, int k, 
                        std::unordered_map<hashType, std::vector<Index>>& indexTable);
      
-
-    std::vector<Minimizer> reduceMinimizers(std::vector<Minimizer>& minimizers);
-
 } // namespace minimizer
 
 #endif //MINIMIZER_H
