@@ -7,10 +7,12 @@
 #include <iostream>
 #include <algorithm>
 #include <unordered_set>
+#include <memory>
 #include "minimizer.h"
 
+using namespace std;
+
 namespace {
-    std::unordered_map<minimizer::hashType, int> hashCnt;
     const int BASE = 31;
     std::unordered_map<char, int> murphy = {{'A', 0},
                                             {'K', 1}, {'R', 1},
@@ -27,39 +29,37 @@ namespace {
         return murphy[c];
     }
 
-    void push(const minimizer::Minimizer& triple, std::deque<minimizer::Minimizer>& dq) {
-        while (!dq.empty() && triple < dq.back()) {
-          dq.pop_back();
+    void push(shared_ptr<minimizer::Minimizer> triple, std::deque<shared_ptr<minimizer::Minimizer>>& dq) {
+        while (!dq.empty() && *triple < *dq.back()) {
+            dq.pop_back();
         }
         dq.push_back(triple);
     }
 
-    void processState(std::deque<minimizer::Minimizer>& dq,
+    void processState(std::deque<shared_ptr<minimizer::Minimizer>>& dq,
                       std::unordered_map<minimizer::hashType, std::vector<minimizer::Index>>& indexTable,
                       int targetIndex, int& lastPositionTaken) {
         assert(!dq.empty());
-        minimizer::Minimizer& front = dq.front();
+        shared_ptr<minimizer::Minimizer> front = dq.front();
         dq.pop_front();
 
-        if (lastPositionTaken < front.position) {
-            indexTable[front.h].push_back(minimizer::Index(targetIndex,front));
-            hashCnt[front.h]++;
-            lastPositionTaken = front.position;
+        if (lastPositionTaken < front->position) {
+            indexTable[front->h].push_back(minimizer::Index(targetIndex,front->position));
+            lastPositionTaken = front->position;
         }
-        while (!dq.empty() && dq.front().h == front.h) {
+        while (!dq.empty() && dq.front()->h == front->h) {
             front = dq.front();
             dq.pop_front();
-            if (lastPositionTaken < front.position) {
-                indexTable[front.h].push_back(minimizer::Index(targetIndex,front));
-                hashCnt[front.h]++;
-                lastPositionTaken = front.position;
+            if (lastPositionTaken < front->position) {
+                indexTable[front->h].push_back(minimizer::Index(targetIndex,front->position));
+                lastPositionTaken = front->position;
             }
         }
         dq.push_front(front);
     }
 
-    void pop(int position, std::deque<minimizer::Minimizer>& dq) {
-        while (!dq.empty() && dq.front().position == position)
+    void pop(int position, std::deque<shared_ptr<minimizer::Minimizer>>& dq) {
+        while (!dq.empty() && dq.front()->position == position)
             dq.pop_front();
     }
 
@@ -83,7 +83,7 @@ namespace minimizer {
         }
 
 
-        std::deque<Minimizer> dqMin,dqMax;
+        std::deque<shared_ptr<Minimizer>> dqMin,dqMax;
 
         hashType lastPower = 1;
         hashType tmpHash = 0;
@@ -101,7 +101,7 @@ namespace minimizer {
 
         // queue s maksimumom algoritam
         for (int i = 0; i < w; i++) {
-            Minimizer mp1 = Minimizer(tmpHash, i);
+            shared_ptr<Minimizer> mp1 = make_shared<Minimizer>(tmpHash, i);
             push(mp1, dqMin);
             tmpHash -= lastPower * value(target[i]);
             tmpHash *= BASE;
@@ -112,7 +112,7 @@ namespace minimizer {
 
         for (int i = w; i < n - k + 1; i++) {
             pop(i - w, dqMin);
-            Minimizer mp1 = Minimizer(tmpHash, i);
+            shared_ptr<Minimizer> mp1 = make_shared<Minimizer>(tmpHash, i);
             push(mp1, dqMin);
             processState(dqMin, indexTable, targetIndex, lastPositionTaken);
 
@@ -122,16 +122,9 @@ namespace minimizer {
         }
     }
 
-    std::vector<minimizer::Minimizer> reduceMinimizers(std::vector<Minimizer>& minimizers) {
-        std::vector<Minimizer> ret;
-        for (Minimizer mini: minimizers) {
-            if (hashCnt[mini.h] < 34)
-                ret.push_back(mini);
-        }
-        return ret;
+    std::vector<Minimizer> computeForSequence(const char *target, int targetLen, int w, int k) {
+
     }
-
-
 
 
 } // namespace minimizer

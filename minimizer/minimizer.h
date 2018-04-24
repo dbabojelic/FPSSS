@@ -34,15 +34,17 @@ namespace minimizer {
 
     struct Index {
         int sequenceIndex;
-        Minimizer mini;
-        
-        Index(int _sequenceIndex, Minimizer _mini)
-                : sequenceIndex(_sequenceIndex), mini(_mini) {}
+        int position;
+
+        Index(int _sequenceIndex, int _position)
+                : sequenceIndex(_sequenceIndex), position(_position) {}
     };
     
     // stavlja minimizere iz target-a u odgovarajuci vektoru u mapi hasheva 
     void addMinimizers(const char* target, int targetLen, int targetIndex, int w, int k, 
                        std::unordered_map<hashType, std::vector<Index>>& indexTable);
+
+    std::vector<Minimizer> computeForSequence(const char* target, int targetLen, int w, int k);
      
 } // namespace minimizer
 

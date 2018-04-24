@@ -60,24 +60,24 @@ int main() {
         hashToCnt.push_back({it->second.size(), it->first});
     }
     sort(hashToCnt.begin(), hashToCnt.end());
-    cout << hashToCnt.size() << endl;
+//    cout << hashToCnt.size() << endl;
     for (pair<int, int> p: hashToCnt) {
-        cout << p.second << " " << p.first << endl;
+ //       cout << p.second << " " << p.first << endl;
     }
 
     cout << "----------------" << endl << endl;
 
 
-    reduceIndexTable(indexTable, 1);
+    reduceIndexTable(indexTable, (1));
     hashToCnt.clear();
     for (auto it = indexTable.begin(); it != indexTable.end(); it++) {
 
         hashToCnt.push_back({it->second.size(), it->first});
     }
     sort(hashToCnt.begin(), hashToCnt.end());
-    cout << hashToCnt.size() << endl;
+  //  cout << hashToCnt.size() << endl;
     for (pair<int, int> p: hashToCnt) {
-        cout << p.second << " " << p.first << endl;
+   //     cout << p.second << " " << p.first << endl;
     }
     return 0;
 }
