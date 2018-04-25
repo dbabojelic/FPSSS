@@ -8,9 +8,12 @@
 #include <algorithm>
 #include <unordered_set>
 #include <memory>
+#include <vector>
 #include "minimizer.h"
 
 using namespace std;
+
+typedef unordered_map<minimizer::hashType, std::vector<minimizer::Index>> IndexTable;
 
 namespace {
     const int BASE = 31;
@@ -36,8 +39,7 @@ namespace {
         dq.push_back(triple);
     }
 
-    void processState(std::deque<shared_ptr<minimizer::Minimizer>>& dq,
-                      std::unordered_map<minimizer::hashType, std::vector<minimizer::Index>>& indexTable,
+    void processState(std::deque<shared_ptr<minimizer::Minimizer>>& dq, IndexTable& indexTable,
                       int targetIndex, int& lastPositionTaken) {
         assert(!dq.empty());
         shared_ptr<minimizer::Minimizer> front = dq.front();
@@ -63,6 +65,10 @@ namespace {
             dq.pop_front();
     }
 
+    bool sortByPosition(const minimizer::Minimizer& m1, const minimizer::Minimizer& m2) {
+        return m1.position < m2.position;
+    }
+
 
 } // namespace
 
@@ -70,7 +76,7 @@ namespace minimizer {
     
 
     void addMinimizers(const char* target, int targetLen, int targetIndex, int w, int k, 
-                       std::unordered_map<hashType, std::vector<Index>>& indexTable) {
+                       IndexTable& indexTable) {
         int n = targetLen;
 
 
@@ -123,7 +129,18 @@ namespace minimizer {
     }
 
     std::vector<Minimizer> computeForSequence(const char *target, int targetLen, int w, int k) {
+        IndexTable table;
+        addMinimizers(target, targetLen, -1, w, k, table);
+        vector<Minimizer> ret;
 
+        for (auto it = table.begin(); it != table.end(); it++) {
+            for (Index el: it->second) {
+                ret.push_back(Minimizer(it->first, el.position));
+            }
+        }
+
+        sort(ret.begin(), ret.end(), sortByPosition);
+        return ret;
     }
 
 

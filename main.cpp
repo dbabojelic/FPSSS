@@ -40,7 +40,7 @@ int main() {
     //}
 
     FASTAFILE *ffp;
-    ffp = OpenFASTA("../uniprot_sprot.fasta");
+    ffp = OpenFASTA("../example.fasta");
 
     char *seq, *name;
     int len;
@@ -48,10 +48,19 @@ int main() {
     unordered_map<minimizer::hashType,
             vector<minimizer::Index>> indexTable;
 
+    vector<minimizer::Minimizer> seqMin;
     while (ReadFASTA(ffp, &seq, &name, &len)) {
         minimizer::addMinimizers(seq, len, cnt, 10, 3, indexTable);
+        if (cnt == 7) {
+            seqMin = minimizer::computeForSequence(seq, len, 10, 3);
+        }
+        cnt++;
         free(seq);
         free(name);
+    }
+
+    for (minimizer::Minimizer mini: seqMin) {
+        cout << mini.h << " " << mini.position << endl;
     }
     CloseFASTA(ffp);
     vector<pair<int, int>> hashToCnt;
