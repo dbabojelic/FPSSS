@@ -1,8 +1,10 @@
 #include <iostream>
+#include <chrono>
 #include <unordered_map>
 #include <map>
 #include <map>
 #include "minimizer.h"
+#include "lis.h"
 #include <algorithm>
 #include <vector>
 #include <cassert>
@@ -40,7 +42,9 @@ int main() {
     //}
 
     FASTAFILE *ffp;
-    ffp = OpenFASTA("../example.fasta");
+    ffp = OpenFASTA("../uniprot_sprot.fasta");
+
+    chrono::steady_clock::time_point start = chrono::steady_clock::now();
 
     char *seq, *name;
     int len;
@@ -59,34 +63,43 @@ int main() {
         free(name);
     }
 
-    for (minimizer::Minimizer mini: seqMin) {
-        cout << mini.h << " " << mini.position << endl;
-    }
     CloseFASTA(ffp);
-    vector<pair<int, int>> hashToCnt;
-    for (auto it = indexTable.begin(); it != indexTable.end(); it++) {
 
-        hashToCnt.push_back({it->second.size(), it->first});
-    }
-    sort(hashToCnt.begin(), hashToCnt.end());
+    chrono::steady_clock::time_point indexingEnd = chrono::steady_clock::now();
+    cout << "indexing finished in: " << chrono::duration_cast<chrono::seconds>(indexingEnd - start).count() << endl;
+//    vector<pair<int, int>> hashToCnt;
+ //   for (auto it = indexTable.begin(); it != indexTable.end(); it++) {
+
+  //      hashToCnt.push_back({it->second.size(), it->first});
+   // }
+    //sort(hashToCnt.begin(), hashToCnt.end());
 //    cout << hashToCnt.size() << endl;
-    for (pair<int, int> p: hashToCnt) {
+    //for (pair<int, int> p: hashToCnt) {
  //       cout << p.second << " " << p.first << endl;
-    }
+   // }
 
-    cout << "----------------" << endl << endl;
+    //cout << "----------------" << endl << endl;
 
 
     reduceIndexTable(indexTable, (1));
-    hashToCnt.clear();
-    for (auto it = indexTable.begin(); it != indexTable.end(); it++) {
+    chrono::steady_clock::time_point reduceingEnd = chrono::steady_clock::now();
+    cout << "reduceing end in: " << chrono::duration_cast<chrono::seconds>(reduceingEnd - indexingEnd).count() << endl;
+    //hashToCnt.clear();
+    //for (auto it = indexTable.begin(); it != indexTable.end(); it++) {
 
-        hashToCnt.push_back({it->second.size(), it->first});
-    }
-    sort(hashToCnt.begin(), hashToCnt.end());
+     //   hashToCnt.push_back({it->second.size(), it->first});
+   // }
+    //sort(hashToCnt.begin(), hashToCnt.end());
   //  cout << hashToCnt.size() << endl;
-    for (pair<int, int> p: hashToCnt) {
+    //for (pair<int, int> p: hashToCnt) {
    //     cout << p.second << " " << p.first << endl;
-    }
+   // }
+    cout << "ukupno u bazi proteina ima: " << cnt << endl;
+    vector<int> ret = lis::getSimilar(seqMin, indexTable);
+    chrono::steady_clock::time_point lisEnd = chrono::steady_clock::now();
+    cout << "lis end in: " << chrono::duration_cast<chrono::seconds>(lisEnd - reduceingEnd).count() << endl;
+    cout << "total end in: " << chrono::duration_cast<chrono::seconds>(lisEnd - start).count() << endl;
+    cout << ret.size() << endl;
+       // cout << i << endl;
     return 0;
 }

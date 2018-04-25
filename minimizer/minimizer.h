@@ -12,6 +12,7 @@
 #include <vector>
 
 
+
 namespace minimizer {
     typedef int hashType;
 
@@ -39,10 +40,12 @@ namespace minimizer {
         Index(int _sequenceIndex, int _position)
                 : sequenceIndex(_sequenceIndex), position(_position) {}
     };
-    
-    // stavlja minimizere iz target-a u odgovarajuci vektoru u mapi hasheva 
+
+    typedef std::unordered_map<minimizer::hashType, std::vector<minimizer::Index>> IndexTable;
+
+    // stavlja minimizere iz target-a u odgovarajuci vektoru u mapi hasheva
     void addMinimizers(const char* target, int targetLen, int targetIndex, int w, int k, 
-                       std::unordered_map<hashType, std::vector<Index>>& indexTable);
+                        IndexTable& indexTable);
 
     std::vector<Minimizer> computeForSequence(const char* target, int targetLen, int w, int k);
      
