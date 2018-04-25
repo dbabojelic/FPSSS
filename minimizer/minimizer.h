@@ -41,7 +41,7 @@ namespace minimizer {
                 : sequenceIndex(_sequenceIndex), position(_position) {}
     };
 
-    typedef std::unordered_map<minimizer::hashType, std::vector<minimizer::Index>> IndexTable;
+    typedef std::vector<std::vector<minimizer::Index>> IndexTable;
 
     // stavlja minimizere iz target-a u odgovarajuci vektoru u mapi hasheva
     void addMinimizers(const char* target, int targetLen, int targetIndex, int w, int k, 

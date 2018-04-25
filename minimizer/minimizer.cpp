@@ -13,23 +13,25 @@
 
 using namespace std;
 
-typedef unordered_map<minimizer::hashType, std::vector<minimizer::Index>> IndexTable;
 
 namespace {
-    const int BASE = 31;
-    std::unordered_map<char, int> murphy = {{'A', 0},
-                                            {'K', 1}, {'R', 1},
-                                            {'E', 2}, {'D', 2}, {'N', 2}, {'Q', 2},
-                                            {'C', 3},
-                                            {'G', 4},
-                                            {'H', 5},
-                                            {'I', 6}, {'L', 6}, {'V', 6}, {'M', 6},
-                                            {'F', 7}, {'Y', 7}, {'W', 7},
-                                            {'P', 8},
-                                            {'S', 9}, {'T', 9}};
+    const int BASE = 11;
+    const int A = 0;
+    const int KR = 1;
+    const int EDNQ = 2;
+    const int C = 3;
+    const int G = 4;
+    const int H = 5;
+    const int ILVM = 6;
+    const int FYW = 7;
+    const int P = 8;
+    const int ST = 9;
+    const int OTHER = 10000;
 
+    const int murphy[] = {A, OTHER, C, EDNQ, EDNQ, FYW, G, H, ILVM, OTHER, KR, ILVM, ILVM, EDNQ, OTHER, P, EDNQ, KR, ST, ST,
+                            OTHER, ILVM, FYW, OTHER, FYW, OTHER};
     int value(char c) {
-        return murphy[c];
+        return murphy[c - 'A'];
     }
 
     void push(shared_ptr<minimizer::Minimizer> triple, std::deque<shared_ptr<minimizer::Minimizer>>& dq) {
@@ -39,20 +41,19 @@ namespace {
         dq.push_back(triple);
     }
 
-    void processState(std::deque<shared_ptr<minimizer::Minimizer>>& dq, IndexTable& indexTable,
+    void processState(std::deque<shared_ptr<minimizer::Minimizer>>& dq, minimizer::IndexTable& indexTable,
                       int targetIndex, int& lastPositionTaken) {
-        assert(!dq.empty());
         shared_ptr<minimizer::Minimizer> front = dq.front();
         dq.pop_front();
 
-        if (lastPositionTaken < front->position) {
+        if (lastPositionTaken < front->position && front->h < indexTable.size()) {
             indexTable[front->h].push_back(minimizer::Index(targetIndex,front->position));
             lastPositionTaken = front->position;
         }
         while (!dq.empty() && dq.front()->h == front->h) {
             front = dq.front();
             dq.pop_front();
-            if (lastPositionTaken < front->position) {
+            if (lastPositionTaken < front->position && front->h < indexTable.size()) {
                 indexTable[front->h].push_back(minimizer::Index(targetIndex,front->position));
                 lastPositionTaken = front->position;
             }
@@ -86,6 +87,13 @@ namespace minimizer {
 
         if (n < k + w - 1) {//ne postoji ni jedan window od w kmera
             w = n - k + 1; // smanji velicinu trazenog prozora na najvise sta mozes, da se nadje barem jedan minimizer
+        }
+        int maxHashes = 1;
+        for (int i = 0; i < k; i++)
+            maxHashes *= BASE;
+
+        while(indexTable.size() < maxHashes) {
+            indexTable.push_back(vector<minimizer::Index>());
         }
 
 
@@ -133,9 +141,9 @@ namespace minimizer {
         addMinimizers(target, targetLen, -1, w, k, table);
         vector<Minimizer> ret;
 
-        for (auto it = table.begin(); it != table.end(); it++) {
-            for (Index el: it->second) {
-                ret.push_back(Minimizer(it->first, el.position));
+        for (int i = 0; i < table.size(); i++) {
+            for (Index el: table[i]) {
+                ret.push_back(Minimizer(i, el.position));
             }
         }
 
