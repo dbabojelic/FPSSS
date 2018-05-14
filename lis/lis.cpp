@@ -61,7 +61,7 @@ namespace lis {
         }
 
         vector<int> ret;
-        int limit = 15;
+        int limit = 10;
         for (auto& seq: seqsForLis) {
             if (lisF(seq.second) >= limit) {
                 ret.push_back(seq.first);
