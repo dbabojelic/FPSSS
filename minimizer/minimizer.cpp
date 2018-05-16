@@ -15,7 +15,7 @@ using namespace std;
 
 
 namespace {
-    const int BASE = 11;
+    const int BASE = 29;
     const int A = 0;
     const int KR = 1;
     const int EDNQ = 2;
@@ -30,39 +30,39 @@ namespace {
 
     const int murphy[] = {A, OTHER, C, EDNQ, EDNQ, FYW, G, H, ILVM, OTHER, KR, ILVM, ILVM, EDNQ, OTHER, P, EDNQ, KR, ST, ST,
                             OTHER, ILVM, FYW, OTHER, FYW, OTHER};
-    int value(char c) {
-        return murphy[c - 'A'];
+    inline int value(char c) {
+        return c - 'A';
     }
 
-    void push(shared_ptr<minimizer::Minimizer> triple, std::deque<shared_ptr<minimizer::Minimizer>>& dq) {
-        while (!dq.empty() && *triple < *dq.back()) {
+    void push(minimizer::Minimizer triple, std::deque<minimizer::Minimizer>& dq) {
+        while (!dq.empty() && triple < dq.back()) {
             dq.pop_back();
         }
         dq.push_back(triple);
     }
 
-    void processState(std::deque<shared_ptr<minimizer::Minimizer>>& dq, minimizer::IndexTable& indexTable,
+    void processState(std::deque<minimizer::Minimizer>& dq, minimizer::IndexTable& indexTable,
                       int targetIndex, int& lastPositionTaken) {
-        shared_ptr<minimizer::Minimizer> front = dq.front();
+        minimizer::Minimizer front = dq.front();
         dq.pop_front();
 
-        if (lastPositionTaken < front->position && front->h < indexTable.size()) {
-            indexTable[front->h].push_back(minimizer::Index(targetIndex,front->position));
-            lastPositionTaken = front->position;
+        if (lastPositionTaken < front.position && front.h < indexTable.size()) {
+            indexTable[front.h].push_back(minimizer::Index(targetIndex,front.position));
+            lastPositionTaken = front.position;
         }
-        while (!dq.empty() && dq.front()->h == front->h) {
+        while (!dq.empty() && dq.front().h == front.h) {
             front = dq.front();
             dq.pop_front();
-            if (lastPositionTaken < front->position && front->h < indexTable.size()) {
-                indexTable[front->h].push_back(minimizer::Index(targetIndex,front->position));
-                lastPositionTaken = front->position;
+            if (lastPositionTaken < front.position && front.h < indexTable.size()) {
+                indexTable[front.h].push_back(minimizer::Index(targetIndex,front.position));
+                lastPositionTaken = front.position;
             }
         }
         dq.push_front(front);
     }
 
-    void pop(int position, std::deque<shared_ptr<minimizer::Minimizer>>& dq) {
-        while (!dq.empty() && dq.front()->position == position)
+    void pop(int position, std::deque<minimizer::Minimizer>& dq) {
+        while (!dq.empty() && dq.front().position == position)
             dq.pop_front();
     }
 
@@ -97,7 +97,7 @@ namespace minimizer {
         }
 
 
-        std::deque<shared_ptr<Minimizer>> dqMin,dqMax;
+        std::deque<Minimizer> dqMin;
 
         hashType lastPower = 1;
         hashType tmpHash = 0;
@@ -115,7 +115,7 @@ namespace minimizer {
 
         // queue s maksimumom algoritam
         for (int i = 0; i < w; i++) {
-            shared_ptr<Minimizer> mp1 = make_shared<Minimizer>(tmpHash, i);
+            Minimizer mp1(tmpHash, i);
             push(mp1, dqMin);
             tmpHash -= lastPower * value(target[i]);
             tmpHash *= BASE;
@@ -126,7 +126,7 @@ namespace minimizer {
 
         for (int i = w; i < n - k + 1; i++) {
             pop(i - w, dqMin);
-            shared_ptr<Minimizer> mp1 = make_shared<Minimizer>(tmpHash, i);
+            Minimizer mp1(tmpHash, i);
             push(mp1, dqMin);
             processState(dqMin, indexTable, targetIndex, lastPositionTaken);
 

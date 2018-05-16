@@ -1,7 +1,5 @@
 #include <iostream>
-#include <chrono>
 #include <unordered_map>
-#include <map>
 #include <map>
 #include "minimizer.h"
 #include "lis.h"
@@ -10,12 +8,20 @@
 #include <cassert>
 #include "opal.h"
 #include "ScoreMatrix.hpp"
+#include <ctime>
+#include <unordered_set>
+
+#define W 10
+#define K 3
+#define OUTPUT_RESULT 5
 
 using namespace std;
 
 extern "C" {
     #include "fasta.h"
 }
+
+unordered_set<int> freqHashes;
 
 void reduceIndexTable(minimizer::IndexTable& indexTable, double p) {
     assert(p <= 100 && p >= 0);
@@ -25,99 +31,97 @@ void reduceIndexTable(minimizer::IndexTable& indexTable, double p) {
     }
     int limit = (p/100)*indexCnt;
 
+    int hash = 0;
     for (auto it = indexTable.begin(); it != indexTable.end(); it++) {
         if (it->size() > limit) {
             it->clear();
+            freqHashes.insert(hash);
         }
+        hash++;
     }
 
 }
 
+double toSeconds(clock_t t) {
+    return ((double)t) / CLOCKS_PER_SEC;
+}
+
 int main() {
+    clock_t start = clock();
     FASTAFILE *ffp;
     ffp = OpenFASTA("../uniprot_sprot3MB.fasta");
+    FASTAFILE *ffq;
+    ffq = OpenFASTA("../uniprot_sprotS.fasta");
 
-    chrono::steady_clock::time_point start = chrono::steady_clock::now();
 
     char *seq, *name;
     int len;
-    int cnt = 0;
+    int dbSeqCnt = 0;
     vector<char*> db;
     vector<char*> dbNames;
     vector<int> dbLengths;
-    char *query;
-    char *queryName;
-    int queryLength;
+
+    int queryCnt = 0;
+    vector<char*> queries;
+    vector<char*> queryName;
+    vector<int> queryLength;
 
     minimizer::IndexTable indexTable;
 
-    vector<minimizer::Minimizer> seqMin;
+    clock_t t = clock();
     while (ReadFASTA(ffp, &seq, &name, &len)) {
         db.push_back(seq);
+        for (char* c = name; ; c++) {
+            if (*c == ' ') {
+                *c = 0;
+                break;
+            }
+        }
         dbNames.push_back(name);
         dbLengths.push_back(len);
-        minimizer::addMinimizers(seq, len, cnt, 10, 3, indexTable);
-        if (cnt == 7) {
-            seqMin = minimizer::computeForSequence(seq, len, 10, 3);
-            query = seq;
-            queryName = name;
-            queryLength = len;
-        }
-        cnt++;
+        dbSeqCnt++;
     }
 
     CloseFASTA(ffp);
 
-    chrono::steady_clock::time_point indexingEnd = chrono::steady_clock::now();
-    cout << "indexing finished in: " << chrono::duration_cast<chrono::seconds>(indexingEnd - start).count() << endl;
+    printf("citanje baze od %d proteina iz faste: %lf s\n", dbSeqCnt, toSeconds(clock() - t));
+    t = clock();
+    for (int i = 0; i < dbSeqCnt; i++) {
+        minimizer::addMinimizers(db[i], dbLengths[i], i, W, K, indexTable);
+    }
+    printf("indeksacija baze: %lf s\n", toSeconds(clock() - t));
+    t = clock();
+
+    while (ReadFASTA(ffq, &seq, &name, &len)) {
+        queries.push_back(seq);
+
+        for (char* c = name; ; c++) {
+            if (*c == ' ') {
+                *c = 0;
+                break;
+            }
+        }
+        queryName.push_back(name);
+        queryLength.push_back(len);
+    }
+    CloseFASTA(ffq);
+
+    printf("citanje %d queryija iz faste: %lf s\n", queries.size(), toSeconds(clock() - t));
+    t = clock();
 
     reduceIndexTable(indexTable, (1));
-    chrono::steady_clock::time_point reduceingEnd = chrono::steady_clock::now();
-    cout << "reduceing end in: " << chrono::duration_cast<chrono::seconds>(reduceingEnd - indexingEnd).count() << endl;
-    vector<int> similar = lis::getSimilar(seqMin, indexTable);
-
-    chrono::steady_clock::time_point lisEnd = chrono::steady_clock::now();
-    cout << "lis end in: " << chrono::duration_cast<chrono::seconds>(lisEnd - reduceingEnd).count() << endl;
-    cout << "database reduced to: " << similar.size() << " sequences" << endl;
+    printf("reduciranje cestih minimizera: %lf s\n", toSeconds(clock() - t));
+    t = clock();
 
 
-    chrono::steady_clock::time_point opalStart = chrono::steady_clock::now();
-
-
-    // OPAL -------------------------------------------------------------------------------
-
+    //     OPAL CONFIG
     int alphabetLength = 23;
     int gapOpen = 11;
     int gapExt = 1;
-    int scoreMatrix[23 * 23] = {
-            4, -1, -2, -2,  0, -1, -1,  0, -2, -1, -1, -1, -1, -2, -1,  1,  0, -3, -2,  0, -2, -1,  0,
-            -1,  5,  0, -2, -3,  1,  0, -2,  0, -3, -2,  2, -1, -3, -2, -1, -1, -3, -2, -3, -1,  0, -1,
-            -2,  0,  6,  1, -3,  0,  0,  0,  1, -3, -3,  0, -2, -3, -2,  1,  0, -4, -2, -3,  3,  0, -1,
-            -2, -2,  1,  6, -3,  0,  2, -1, -1, -3, -4, -1, -3, -3, -1,  0, -1, -4, -3, -3,  4,  1, -1,
-            0, -3, -3, -3,  9, -3, -4, -3, -3, -1, -1, -3, -1, -2, -3, -1, -1, -2, -2, -1, -3, -3, -2,
-            -1,  1,  0,  0, -3,  5,  2, -2,  0, -3, -2,  1,  0, -3, -1,  0, -1, -2, -1, -2,  0,  3, -1,
-            -1,  0,  0,  2, -4,  2,  5, -2,  0, -3, -3,  1, -2, -3, -1,  0, -1, -3, -2, -2,  1,  4, -1,
-            0, -2,  0, -1, -3, -2, -2,  6, -2, -4, -4, -2, -3, -3, -2,  0, -2, -2, -3, -3, -1, -2, -1,
-            -2,  0,  1, -1, -3,  0,  0, -2,  8, -3, -3, -1, -2, -1, -2, -1, -2, -2,  2, -3,  0,  0, -1,
-            -1, -3, -3, -3, -1, -3, -3, -4, -3,  4,  2, -3,  1,  0, -3, -2, -1, -3, -1,  3, -3, -3, -1,
-            -1, -2, -3, -4, -1, -2, -3, -4, -3,  2,  4, -2,  2,  0, -3, -2, -1, -2, -1,  1, -4, -3, -1,
-            -1,  2,  0, -1, -3,  1,  1, -2, -1, -3, -2,  5, -1, -3, -1,  0, -1, -3, -2, -2,  0,  1, -1,
-            -1, -1, -2, -3, -1,  0, -2, -3, -2,  1,  2, -1,  5,  0, -2, -1, -1, -1, -1,  1, -3, -1, -1,
-            -2, -3, -3, -3, -2, -3, -3, -3, -1,  0,  0, -3,  0,  6, -4, -2, -2,  1,  3, -1, -3, -3, -1,
-            -1, -2, -2, -1, -3, -1, -1, -2, -2, -3, -3, -1, -2, -4,  7, -1, -1, -4, -3, -2, -2, -1, -2,
-            1, -1,  1,  0, -1,  0,  0,  0, -1, -2, -2,  0, -1, -2, -1,  4,  1, -3, -2, -2,  0,  0,  0,
-            0, -1,  0, -1, -1, -1, -1, -2, -2, -1, -1, -1, -1, -2, -1,  1,  5, -2, -2,  0, -1, -1,  0,
-            -3, -3, -4, -4, -2, -2, -3, -2, -2, -3, -2, -3, -1,  1, -4, -3, -2, 11,  2, -3, -4, -3, -2,
-            -2, -2, -2, -3, -2, -1, -2, -3,  2, -1, -1, -2, -1,  3, -3, -2, -2,  2,  7, -1, -3, -2, -1,
-            0, -3, -3, -3, -1, -2, -2, -3, -3,  3,  1, -2,  1, -1, -2, -2,  0, -3, -1,  4, -3, -2, -1,
-            -2, -1,  3,  4, -3,  0,  1, -1,  0, -3, -4,  0, -3, -3, -2,  0, -1, -4, -3, -3,  4,  1, -1,
-            -1,  0,  0,  1, -3,  3,  4, -2,  0, -3, -3,  1, -1, -3, -1,  0, -1, -3, -2, -2,  1,  4, -1,
-            0, -1, -1, -1, -2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -2,  0,  0, -2, -1, -1, -1, -1, -1
 
-    };
 
     unsigned char blosumAlphabet[23] = {'A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K',
-                                  'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V', 'B', 'Z', 'X'};
+                                        'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V', 'B', 'Z', 'X'};
     unsigned char toBlosumIndex[26];
     for (int i = 0; i < 26; i++)
         toBlosumIndex[i] = 22;
@@ -125,54 +129,101 @@ int main() {
         toBlosumIndex[blosumAlphabet[i] - 'A'] = i;
 
     }
+
+    int *scoreMatrix = ScoreMatrix::getBlosum62().getMatrix();
+
+
+
+
+    // za svaki query napravi redukciju baze i opal nad kandidatima
+
+    for (int q = 0; q < queries.size(); q++) {
+        t = clock();
+        vector<minimizer::Minimizer> mins = minimizer::computeForSequence(queries[q], queryLength[q], W, K);
+        vector<minimizer::Minimizer> seqMin;
+        for (minimizer::Minimizer mini: mins) {
+            if (freqHashes.find(mini.h) == freqHashes.end())
+                seqMin.push_back(mini);
+        }
+        vector<int> similar = lis::getSimilar(seqMin, indexTable);
+        printf("prostor reduciran na %d proteina u: %lf s\n", similar.size(), toSeconds(clock() - t));
+        t = clock();
+        int opStart = clock();
+        printf("minimizera ima: %d\n", seqMin.size());
+
+
+
+
+
 // Query
 
-    unsigned char* opalQuery =  new unsigned char[sizeof(unsigned char) * queryLength];
-    for (int i = 0; i < queryLength; i++) {
-        opalQuery[i] = toBlosumIndex[query[i] - 'A'];
-    }
+        unsigned char *opalQuery = new unsigned char[sizeof(unsigned char) * queryLength[q]];
+        for (int i = 0; i < queryLength[q]; i++) {
+            opalQuery[i] = toBlosumIndex[queries[q][i] - 'A'];
+        }
 
 // Database
-    int dbOpalLength = similar.size();
+        int dbOpalLength = similar.size();
 
-    unsigned char** opalDb = new unsigned char*[sizeof(unsigned char*) * dbOpalLength];
-    int* opalDbSeqsLen = new int[sizeof(int) * dbOpalLength];
-    int opdb = 0;
-    for (int candidate: similar) {
-        unsigned char* opalCandidate = new unsigned char[sizeof(unsigned char) * dbLengths[candidate]];
-        for (int i = 0; i < dbLengths[candidate]; i++) {
-            opalCandidate[i] = toBlosumIndex[db[candidate][i] - 'A'];
+        unsigned char **opalDb = new unsigned char *[sizeof(unsigned char *) * dbOpalLength];
+        int *opalDbSeqsLen = new int[sizeof(int) * dbOpalLength];
+        int opdb = 0;
+        for (int candidate: similar) {
+            unsigned char *opalCandidate = new unsigned char[sizeof(unsigned char) * dbLengths[candidate]];
+            for (int i = 0; i < dbLengths[candidate]; i++) {
+                opalCandidate[i] = toBlosumIndex[db[candidate][i] - 'A'];
+            }
+            opalDb[opdb] = opalCandidate;
+            opalDbSeqsLen[opdb] = dbLengths[candidate];
+            opdb++;
         }
-        opalDb[opdb] = opalCandidate;
-        opalDbSeqsLen[opdb] = dbLengths[candidate];
-        opdb++;
-    }
 
 // Results for each sequence in database
-    OpalSearchResult** results  = new OpalSearchResult*[sizeof(OpalSearchResult*) * dbOpalLength];
-    for (int i = 0; i < dbOpalLength; i++) {
-        results[i] = new OpalSearchResult();
-        opalInitSearchResult(results[i]);
-    }
+        OpalSearchResult **results = new OpalSearchResult *[sizeof(OpalSearchResult *) * dbOpalLength];
+        for (int i = 0; i < dbOpalLength; i++) {
+            results[i] = new OpalSearchResult();
+            opalInitSearchResult(results[i]);
+        }
 
 
 // Do calculation!
-    int resultCode = opalSearchDatabase(opalQuery, queryLength, opalDb, dbOpalLength, opalDbSeqsLen,
-                                        gapOpen, gapExt, scoreMatrix, alphabetLength, results, OPAL_SEARCH_SCORE,
-                                        OPAL_MODE_SW, OPAL_OVERFLOW_BUCKETS);
+        t = clock();
+        int resultCode = opalSearchDatabase(opalQuery, queryLength[q], opalDb, dbOpalLength, opalDbSeqsLen,
+                                            gapOpen, gapExt, ScoreMatrix::getBlosum62().getMatrix(), alphabetLength,
+                                            results,
+                                            OPAL_SEARCH_SCORE, OPAL_MODE_SW, OPAL_OVERFLOW_BUCKETS);
 
+        printf("kraj opala u: %lf s\n", toSeconds(clock() - t));
 
-    chrono::steady_clock::time_point opalEnd = chrono::steady_clock::now();
-    cout << "opal end in: " << chrono::duration_cast<chrono::seconds>(opalEnd - opalStart).count() << endl;
+        t = clock();
+        delete opalQuery;
+        for (int i = 0; i < dbOpalLength; i++)
+            delete opalDb[i];
+        delete opalDbSeqsLen;
+        delete opalDb;
+
 // Print scores
-    int i = 0;
-    for (int cand: similar) {
-        printf("cand: %d, score: %d\n", cand, results[i]->score);
-        i++;
+        int i = 0;
+        vector<pair<int, int>> result;
+        for (int cand: similar) {
+            result.push_back({results[i]->score, cand});
+            i++;
+        }
+
+        sort(result.begin(), result.end());
+        int cnt = 0;
+        printf("\n\n");
+        for (int i = (int)result.size() - 1; i >= 0 && cnt < OUTPUT_RESULT; i--) {
+            cnt++;
+            printf("%s\t%s\t%d\n", queryName[q], dbNames[result[i].second], result[i].first);
+        }
+        printf("\n\n");
+
+        for (int i = 0; i < dbOpalLength; i++)
+            delete results[i];
+        delete results;
     }
 
-
-    chrono::steady_clock::time_point end = chrono::steady_clock::now();
-    cout << "total end in: " << chrono::duration_cast<chrono::seconds>(end - start).count() << endl;
+    printf("total kraj: %lf s \n", toSeconds(clock() - start));
     return 0;
 }

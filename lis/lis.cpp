@@ -61,11 +61,19 @@ namespace lis {
         }
 
         vector<int> ret;
-        int limit = 10;
+        vector<pair<int, int>> candidates;
+        int sz = v1.size();
         for (auto& seq: seqsForLis) {
-            if (lisF(seq.second) >= limit) {
-                ret.push_back(seq.first);
-            }
+            int lisValue = lisF(seq.second);
+            if (lisValue < 2)
+                continue;
+            candidates.push_back({lisValue, seq.first});
+        }
+        sort(candidates.begin(), candidates.end());
+        int cnt = 200;
+        for (int i = candidates.size() - 1; i >= 0 && cnt > 0; i--, cnt--) {
+            //cout << candidates[i].first << " " << candidates[i].second << endl;
+            ret.push_back(candidates[i].second);
         }
         return ret;
     }

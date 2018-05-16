@@ -39,3 +39,9 @@ cmake-build-debug/
 
 # fasta files
 *.fasta
+
+
+#ostalo
+blastOutput
+outLoose
+outStrict
