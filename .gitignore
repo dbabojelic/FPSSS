@@ -45,3 +45,16 @@ cmake-build-debug/
 blastOutput
 outLoose
 outStrict
+blastBigOut
+blastBigOut1
+blastBigOut2
+blastBigOut5
+fpsssOutBig
+fpsssOutBig1
+fpsssOutBig2
+fpsssOutBigWthMurphy
+fpsssOutBigWthMurphy5
+fpsssOutSmall
+jaccard.py
+to2.pl
+to5.pl

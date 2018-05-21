@@ -37,8 +37,14 @@ namespace minimizer {
         int sequenceIndex;
         int position;
 
-        Index(int _sequenceIndex, int _position)
-                : sequenceIndex(_sequenceIndex), position(_position) {}
+        Index(int _sequenceIndex, int _position) : sequenceIndex(_sequenceIndex), position(_position) {}
+
+        inline bool operator<(const Index& other) const {
+            return sequenceIndex < other.sequenceIndex;
+        }
+
+
+
     };
 
     typedef std::vector<std::vector<minimizer::Index>> IndexTable;

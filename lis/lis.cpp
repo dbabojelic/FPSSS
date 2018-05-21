@@ -51,30 +51,38 @@ namespace {
 
 namespace lis {
 
-    std::vector<int> getSimilar(std::vector<minimizer::Minimizer> v1, minimizer::IndexTable &indexTable) {
+    std::vector<int> getSimilar(std::vector<minimizer::Minimizer> v1, minimizer::IndexTable &indexTable,
+                                std::vector<int>& lens, int qLen, int cnt) {
+        clock_t start = clock();
         unordered_map<int, vector<int>> seqsForLis;
 
+        clock_t lisStart = clock();
         for (minimizer::Minimizer mini: v1) {
+            int prosli = -1;
             for (auto& element: indexTable[mini.h]) {
+                if (element.sequenceIndex == prosli)
+                    continue;
+                prosli = element.sequenceIndex;
                 seqsForLis[element.sequenceIndex].push_back(element.position);
             }
         }
 
+        clock_t lisEnd = clock();
         vector<int> ret;
-        vector<pair<int, int>> candidates;
+        vector<pair<double, int>> candidates;
         int sz = v1.size();
         for (auto& seq: seqsForLis) {
             int lisValue = lisF(seq.second);
-            if (lisValue < 2)
+            if (lisValue < 1)
                 continue;
-            candidates.push_back({lisValue, seq.first});
+            double lisValueDenom = std::max(qLen, lens[seq.first]) * 1. / std::min(qLen, lens[seq.first]);
+            candidates.push_back({lisValue / lisValueDenom, seq.first});
         }
         sort(candidates.begin(), candidates.end());
-        int cnt = 200;
         for (int i = candidates.size() - 1; i >= 0 && cnt > 0; i--, cnt--) {
-            //cout << candidates[i].first << " " << candidates[i].second << endl;
             ret.push_back(candidates[i].second);
         }
+        clock_t end = clock();
         return ret;
     }
 }

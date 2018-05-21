@@ -12,7 +12,7 @@
 namespace lis {
 
     std::vector<int> getSimilar(std::vector<minimizer::Minimizer> v1,
-                                                 minimizer::IndexTable& indexTable);
+                                                 minimizer::IndexTable& indexTable, std::vector<int>& lens, int qLen, int cnt);
 } // namespace lis
 
 #endif //PROJEKT_LIS_H
