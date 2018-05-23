@@ -15,7 +15,7 @@ using namespace std;
 
 
 namespace {
-    const int BASE = 29;
+    const int BASE = 11;
     const int A = 0;
     const int KR = 1;
     const int EDNQ = 2;
@@ -31,7 +31,7 @@ namespace {
     const int murphy[] = {A, OTHER, C, EDNQ, EDNQ, FYW, G, H, ILVM, OTHER, KR, ILVM, ILVM, EDNQ, OTHER, P, EDNQ, KR, ST, ST,
                             OTHER, ILVM, FYW, OTHER, FYW, OTHER};
     inline int value(char c) {
-        return c - 'A';
+        return murphy[c - 'A'];
     }
 
     void push(minimizer::Minimizer triple, std::deque<minimizer::Minimizer>& dq) {

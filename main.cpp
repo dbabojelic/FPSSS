@@ -49,16 +49,16 @@ double toSeconds(clock_t t) {
     return ((double)t) / CLOCKS_PER_SEC;
 }
 
-int main() {
+int main(int argc, char **argv) {
     W = 13, K = 4;
     //for (int w = 5; w <= 20; w++) for (int k = 2; k <= 8 && k <= w - 1; k++) {
 
 
             clock_t start = clock();
             FASTAFILE *ffp;
-            ffp = OpenFASTA("../uniprot_sprot.fasta");
+            ffp = OpenFASTA(argv[1]);
             FASTAFILE *ffq;
-            ffq = OpenFASTA("../uniprot_sprotS.fasta");
+            ffq = OpenFASTA(argv[2]);
             freqHashes.clear();
             long long finalResult = 0;
 
