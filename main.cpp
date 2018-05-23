@@ -67,12 +67,12 @@ int main(int argc, char **argv) {
             int len;
             int dbSeqCnt = 0;
             vector<char *> db;
-            vector<char *> dbNames;
+            vector<string> dbNames;
             vector<int> dbLengths;
 
             int queryCnt = 0;
             vector<char *> queries;
-            vector<char *> queryName;
+            vector<string> queryName;
             vector<int> queryLength;
 
             minimizer::IndexTable indexTable;
@@ -80,13 +80,16 @@ int main(int argc, char **argv) {
             clock_t t = clock();
             while (ReadFASTA(ffp, &seq, &name, &len)) {
                 db.push_back(seq);
-                for (char *c = name;; c++) {
+                string n = "";
+                for (char *c = name;*c && *c != ' '; c++) {
                     if (*c == ' ') {
                         *c = 0;
                         break;
                     }
+                    n += *c;
+
                 }
-                dbNames.push_back(name);
+                dbNames.push_back(n);
                 dbLengths.push_back(len);
                 dbSeqCnt++;
             }
@@ -101,17 +104,32 @@ int main(int argc, char **argv) {
             fprintf(stderr, "indeksacija baze: %lf s\n", toSeconds(clock() - t));
             t = clock();
 
+            printf("wotinnng\n");
+            int cnt = 0;
             while (ReadFASTA(ffq, &seq, &name, &len)) {
+                printf("uspio %d\n", cnt);
+                cnt++;
+                printf("%s\n", seq);
                 queries.push_back(seq);
 
-                for (char *c = name;; c++) {
+                //for (char *c = name;; c++) {
+                 //   if (*c == ' ') {
+                  //      *c = 0;
+                   //     break;
+                    //}
+                //}
+                string n = "";
+                for (char *c = name;*c && *c != ' '; c++) {
                     if (*c == ' ') {
                         *c = 0;
                         break;
                     }
+                    n += *c;
+
                 }
-                queryName.push_back(name);
+                queryName.push_back(n);
                 queryLength.push_back(len);
+                printf("uradio sve\n");
             }
             CloseFASTA(ffq);
 
@@ -229,7 +247,7 @@ int main(int argc, char **argv) {
                 fprintf(stderr, "\n\n");
                 for (int i = (int) result.size() - 1; i >= 0 && cnt < OUTPUT_RESULT; i--) {
                     cnt++;
-                    printf("%s\t%s\t%d\n", queryName[q], dbNames[result[i].second], result[i].first);
+                    printf("%s\t\t%s\t\t%d\n", queryName[q].c_str(), dbNames[result[i].second].c_str(), result[i].first);
                     finalResult += result[i].first;
                 }
                 fprintf(stderr, "\n\n");
