@@ -243,7 +243,7 @@ int main(int argc, char **argv) {
                 fprintf(stderr, "\n\n");
                 for (int i = (int) result.size() - 1; i >= 0 && cnt < OUTPUT_RESULT; i--) {
                     cnt++;
-                    printf("%s\t\t%s\t\t%d\n", queryName[q].c_str(), dbNames[result[i].second].c_str(), result[i].first);
+                    printf("%s\t%s\t%d\n", queryName[q].c_str(), dbNames[result[i].second].c_str(), result[i].first);
                     finalResult += result[i].first;
                 }
                 fprintf(stderr, "\n\n");
