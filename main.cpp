@@ -104,12 +104,9 @@ int main(int argc, char **argv) {
             fprintf(stderr, "indeksacija baze: %lf s\n", toSeconds(clock() - t));
             t = clock();
 
-            printf("wotinnng\n");
             int cnt = 0;
             while (ReadFASTA(ffq, &seq, &name, &len)) {
-                printf("uspio %d\n", cnt);
                 cnt++;
-                printf("%s\n", seq);
                 queries.push_back(seq);
 
                 //for (char *c = name;; c++) {
@@ -129,7 +126,6 @@ int main(int argc, char **argv) {
                 }
                 queryName.push_back(n);
                 queryLength.push_back(len);
-                printf("uradio sve\n");
             }
             CloseFASTA(ffq);
 
