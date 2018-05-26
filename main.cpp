@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
         while (ReadFASTA(ffp, &seq, &name, &len)) {
             db.push_back(seq);
             string n = "";
-            for (char *c = name;*c && *c != ' '; c++) {
+            for (char *c = name;*c && *c != ' ' && *c != '\n' && *c != '\r'; c++) {
                 if (*c == ' ') {
                     *c = 0;
                     break;
@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
             queries.push_back(seq);
 
             string n = "";
-            for (char *c = name;*c && *c != ' '; c++) {
+            for (char *c = name;*c && *c != ' ' && *c != '\n' && *c != '\r'; c++) {
                 if (*c == ' ') {
                     *c = 0;
                     break;
@@ -153,6 +153,7 @@ int main(int argc, char **argv) {
         // za svaki query napravi redukciju baze i opal nad kandidatima
 
         int reduceTo = dbNames.size() / 100;
+        clock_t qs = clock();
         for (int q = 0; q < queries.size(); q++) {
             t = clock();
             vector<minimizer::Minimizer> mins = minimizer::computeForSequence(queries[q], queryLength[q], W, K);
@@ -208,7 +209,7 @@ int main(int argc, char **argv) {
                                                 gapOpen, gapExt, ScoreMatrix::getBlosum62().getMatrix(),
                                                 alphabetLength,
                                                 results,
-                                                OPAL_SEARCH_SCORE, OPAL_MODE_SW, OPAL_OVERFLOW_BUCKETS);
+                                                OPAL_SEARCH_ALIGNMENT, OPAL_MODE_SW, OPAL_OVERFLOW_BUCKETS);
 
             fprintf(stderr, "kraj opala u: %lf s\n", toSeconds(clock() - t));
 
@@ -220,28 +221,63 @@ int main(int argc, char **argv) {
             delete opalDb;
 
 // Print scores
-            int i = 0;
-            vector<pair<int, int>> result;
-            for (int cand: similar) {
-                result.push_back({results[i]->score, cand});
-                i++;
+            vector<pair<int, int>> topScoring;
+            for (int i = 0; i < similar.size(); i++) {
+                topScoring.push_back({results[i]->score, i});
             }
 
-            sort(result.begin(), result.end());
+            sort(topScoring.begin(), topScoring.end());
+            fprintf(stderr, "\n\n");
             int cnt = 0;
-            fprintf(stderr, "\n\n");
-            for (int i = (int) result.size() - 1; i >= 0 && cnt < OUTPUT_RESULT; i--) {
+            for (int i = (int) topScoring.size() - 1; i >= 0 && cnt < OUTPUT_RESULT; i--) {
                 cnt++;
-                printf("%s\t%s\t%d\n", queryName[q].c_str(), dbNames[result[i].second].c_str(), result[i].first);
-                finalResult += result[i].first;
+                int matchCnt = 0;
+                int mismatchCnt = 0;
+                int gapCnt = 0;
+                int id = topScoring[i].second;
+                for (int j = 0; j < results[id]->alignmentLength; j++) {
+                    switch (results[id]->alignment[j]) {
+                        case OPAL_ALIGN_MATCH:
+                            matchCnt++;
+                            break;
+                        case OPAL_ALIGN_DEL:
+                            if (j == 0 || results[id]->alignment[j-1] != OPAL_ALIGN_DEL)
+                                gapCnt++;
+                            break;
+                        case OPAL_ALIGN_INS:
+                            if (j == 0 || results[id]->alignment[j-1] != OPAL_ALIGN_INS)
+                                gapCnt++;
+                            break;
+                        case OPAL_ALIGN_MISMATCH:
+                            mismatchCnt++;
+                            break;
+                    }
+                }
+
+                printf("%s\t%s\t%lf\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+                       queryName[q].c_str(),
+                       dbNames[similar[topScoring[i].second]].c_str(),
+                       matchCnt * 1. / results[id]->alignmentLength,
+                       results[id]->alignmentLength,
+                       mismatchCnt,
+                       gapCnt,
+                       results[id]->startLocationQuery,
+                       results[id]->endLocationQuery,
+                       results[id]->startLocationTarget,
+                       results[id]->endLocationTarget,
+                       topScoring[i].first);
+                finalResult += topScoring[i].first;
             }
             fprintf(stderr, "\n\n");
 
-            for (int i = 0; i < dbOpalLength; i++)
+            for (int i = 0; i < dbOpalLength; i++) {
+                free(results[i]->alignment);
                 delete results[i];
+            }
             delete results;
         }
 
+        fprintf(stderr, "queryije odgovorio u: %lf s \n", toSeconds(clock() - qs));
         fprintf(stderr, "total kraj: %lf s \n", toSeconds(clock() - start));
         fprintf(stderr, "FINAL: %lld\n", finalResult);
     return 0;
