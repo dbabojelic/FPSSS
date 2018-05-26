@@ -155,6 +155,12 @@ int main(int argc, char **argv) {
         int reduceTo = dbNames.size() / 100;
         clock_t qs = clock();
         for (int q = 0; q < queries.size(); q++) {
+            if (queryLength[q] > 1000)
+                reduceTo /= 2;
+            if (queryLength[q] > 1500)
+                reduceTo /= 2;
+            if (queryLength[q] > 2000)
+                reduceTo /= 2;
             t = clock();
             vector<minimizer::Minimizer> mins = minimizer::computeForSequence(queries[q], queryLength[q], W, K);
             vector<minimizer::Minimizer> seqMin;
