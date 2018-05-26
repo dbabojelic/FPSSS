@@ -157,9 +157,9 @@ int main(int argc, char **argv) {
         for (int q = 0; q < queries.size(); q++) {
             if (queryLength[q] > 1000)
                 reduceTo /= 2;
-            if (queryLength[q] > 1500)
-                reduceTo /= 2;
             if (queryLength[q] > 2000)
+                reduceTo /= 2;
+            if (queryLength[q] > 8000)
                 reduceTo /= 2;
             t = clock();
             vector<minimizer::Minimizer> mins = minimizer::computeForSequence(queries[q], queryLength[q], W, K);
@@ -263,7 +263,7 @@ int main(int argc, char **argv) {
                 printf("%s\t%s\t%lf\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
                        queryName[q].c_str(),
                        dbNames[similar[topScoring[i].second]].c_str(),
-                       matchCnt * 1. / results[id]->alignmentLength,
+                       matchCnt * 100. / results[id]->alignmentLength,
                        results[id]->alignmentLength,
                        mismatchCnt,
                        gapCnt,
