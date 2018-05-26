@@ -152,9 +152,9 @@ int main(int argc, char **argv) {
 
         // za svaki query napravi redukciju baze i opal nad kandidatima
 
-        int reduceTo = dbNames.size() / 100;
         clock_t qs = clock();
         for (int q = 0; q < queries.size(); q++) {
+            int reduceTo = dbNames.size() / 100;
             if (queryLength[q] > 1000)
                 reduceTo /= 2;
             if (queryLength[q] > 2000)
