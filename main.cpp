@@ -154,13 +154,8 @@ int main(int argc, char **argv) {
 
         clock_t qs = clock();
         for (int q = 0; q < queries.size(); q++) {
-            int reduceTo = dbNames.size() / 100;
-            if (queryLength[q] > 1000)
-                reduceTo /= 2;
-            if (queryLength[q] > 2000)
-                reduceTo /= 2;
-            if (queryLength[q] > 8000)
-                reduceTo /= 2;
+            int reduceTo = std::min((int)dbNames.size() / 100, 2000000 / queryLength[q]);
+
             t = clock();
             vector<minimizer::Minimizer> mins = minimizer::computeForSequence(queries[q], queryLength[q], W, K);
             vector<minimizer::Minimizer> seqMin;
@@ -175,7 +170,8 @@ int main(int argc, char **argv) {
             fprintf(stderr, "minimizera ima: %d\n", seqMin.size());
 
 
-
+            //sortiranje similar sekvence tako da prvo dolaze manji proteini
+            std::sort(similar.begin(), similar.end(), [&](int a, int b) {return dbLengths[a] < dbLengths[b];});
 
 
 // Query
@@ -215,7 +211,7 @@ int main(int argc, char **argv) {
                                                 gapOpen, gapExt, ScoreMatrix::getBlosum62().getMatrix(),
                                                 alphabetLength,
                                                 results,
-                                                OPAL_SEARCH_ALIGNMENT, OPAL_MODE_SW, OPAL_OVERFLOW_BUCKETS);
+                                                OPAL_SEARCH_ALIGNMENT, OPAL_MODE_SW, OPAL_OVERFLOW_SIMPLE);
 
             fprintf(stderr, "kraj opala u: %lf s\n", toSeconds(clock() - t));
 
