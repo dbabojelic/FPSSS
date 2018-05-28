@@ -62,8 +62,8 @@ namespace lis {
             for (auto& element: indexTable[mini.h]) {
                 if (element.sequenceIndex == prosli)
                     continue;
-                if (std::abs(element.position - mini.position) > 0.2 * v1.size())
-                    continue;
+                //if (std::abs(element.position - mini.position) > 0.2 * v1.size())
+                 //   continue;
                 prosli = element.sequenceIndex;
                 seqsForLis[element.sequenceIndex].push_back(element.position);
             }
@@ -71,14 +71,14 @@ namespace lis {
 
         clock_t lisEnd = clock();
         vector<int> ret;
-        vector<pair<double, int>> candidates;
+        vector<pair<int, int>> candidates;
         int sz = v1.size();
         for (auto& seq: seqsForLis) {
             int lisValue = lisF(seq.second);
             if (lisValue < 1)
                 continue;
-            double lisValueDenom = std::max(qLen, lens[seq.first]) * 1. / std::min(qLen, lens[seq.first]);
-            candidates.push_back({lisValue / lisValueDenom, seq.first});
+            //double lisValueDenom = std::max(qLen, lens[seq.first]) * 1. / std::min(qLen, lens[seq.first]);
+            candidates.push_back({lisValue, seq.first});
         }
         sort(candidates.begin(), candidates.end());
         for (int i = candidates.size() - 1; i >= 0 && cnt > 0; i--, cnt--) {
