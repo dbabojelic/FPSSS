@@ -62,10 +62,10 @@ namespace lis {
             for (auto& element: indexTable[mini.h]) {
                 if (element.sequenceIndex == prosli)
                     continue;
-                //if (std::abs(element.position - mini.position) > 0.2 * v1.size())
-                 //   continue;
+//                if (std::abs(element.position - mini.position) > 0.2 * v1.size())
+//                    continue;
                 prosli = element.sequenceIndex;
-                seqsForLis[element.sequenceIndex].push_back(element.position);
+                seqsForLis[element.sequenceIndex].push_back(element.position - mini.position);
             }
         }
 
@@ -74,10 +74,22 @@ namespace lis {
         vector<pair<int, int>> candidates;
         int sz = v1.size();
         for (auto& seq: seqsForLis) {
-            int lisValue = lisF(seq.second);
-            if (lisValue < 1)
-                continue;
-            //double lisValueDenom = std::max(qLen, lens[seq.first]) * 1. / std::min(qLen, lens[seq.first]);
+//            int lisValue = lisF(seq.second);
+//            if (lisValue < 1)
+//                continue;
+//            double lisValueDenom = std::max(qLen, lens[seq.first]) * 1. / std::min(qLen, lens[seq.first]);
+            sort(seq.second.begin(), seq.second.end());
+            int diff = 30;
+            int p1 = 0;
+            int p2 = 0;
+            int sz = seq.second.size();
+            int lisValue = 0;
+            while (p2 < sz) {
+                while (seq.second[p2] - seq.second[p1] > diff)
+                    p1++;
+                lisValue = max(lisValue, p2 - p1 + 1);
+                p2++;
+            }
             candidates.push_back({lisValue, seq.first});
         }
         sort(candidates.begin(), candidates.end());
