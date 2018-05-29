@@ -73,6 +73,8 @@ int main(int argc, char **argv) {
         minimizer::IndexTable indexTable;
 
         clock_t t = clock();
+        //erase down this
+        int thatId;
         while (ReadFASTA(ffp, &seq, &name, &len)) {
             db.push_back(seq);
             string n = "";
@@ -83,6 +85,10 @@ int main(int argc, char **argv) {
                 }
                 n += *c;
 
+            }
+            if (n == "sp|Q25802|RPOC2_PLAF7") {
+                thatId = dbSeqCnt;
+                fprintf(stderr, "okay naso %d\n", thatId);
             }
             dbNames.push_back(n);
             dbLengths.push_back(len);
@@ -164,6 +170,12 @@ int main(int argc, char **argv) {
                     seqMin.push_back(mini);
             }
             vector<int> similar = lis::getSimilar(seqMin, indexTable, dbLengths, queryLength[q], reduceTo);
+//            similar.push_back(394582);
+            for (int c: similar) {
+                if (c == thatId) {
+                    fprintf(stderr, "okayyyyy nesto nije u redu, taj je prosao lis\n");
+                }
+            }
             fprintf(stderr, "prostor reduciran na %d proteina u: %lf s\n", similar.size(), toSeconds(clock() - t));
             t = clock();
             int opStart = clock();

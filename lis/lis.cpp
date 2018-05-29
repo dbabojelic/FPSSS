@@ -73,13 +73,14 @@ namespace lis {
         vector<int> ret;
         vector<pair<int, int>> candidates;
         int sz = v1.size();
+        int cnt111 = 0;
         for (auto& seq: seqsForLis) {
 //            int lisValue = lisF(seq.second);
 //            if (lisValue < 1)
 //                continue;
 //            double lisValueDenom = std::max(qLen, lens[seq.first]) * 1. / std::min(qLen, lens[seq.first]);
             sort(seq.second.begin(), seq.second.end());
-            int diff = 30;
+            int diff = 50;
             int p1 = 0;
             int p2 = 0;
             int sz = seq.second.size();
@@ -90,11 +91,19 @@ namespace lis {
                 lisValue = max(lisValue, p2 - p1 + 1);
                 p2++;
             }
+            if (cnt111 == 394582) {
+                cout << lisValue << "    heeeej" << endl;
+            }
             candidates.push_back({lisValue, seq.first});
+            cnt111++;
         }
         sort(candidates.begin(), candidates.end());
+        int bale = 40;
         for (int i = candidates.size() - 1; i >= 0 && cnt > 0; i--, cnt--) {
             ret.push_back(candidates[i].second);
+            if(bale > 0) cout << candidates[i].first << endl;
+            bale--;
+            
         }
         clock_t end = clock();
         return ret;
