@@ -86,10 +86,6 @@ int main(int argc, char **argv) {
                 n += *c;
 
             }
-            if (n == "sp|Q25802|RPOC2_PLAF7") {
-                thatId = dbSeqCnt;
-                fprintf(stderr, "okay naso %d\n", thatId);
-            }
             dbNames.push_back(n);
             dbLengths.push_back(len);
             dbSeqCnt++;
@@ -160,7 +156,7 @@ int main(int argc, char **argv) {
 
         clock_t qs = clock();
         for (int q = 0; q < queries.size(); q++) {
-            int reduceTo = std::min((int)dbNames.size() / 100, 2000000 / queryLength[q]);
+            int reduceTo = std::min((int)dbNames.size() / 100, 1890000 / queryLength[q]);
 
             t = clock();
             vector<minimizer::Minimizer> mins = minimizer::computeForSequence(queries[q], queryLength[q], W, K);
@@ -170,12 +166,6 @@ int main(int argc, char **argv) {
                     seqMin.push_back(mini);
             }
             vector<int> similar = lis::getSimilar(seqMin, indexTable, dbLengths, queryLength[q], reduceTo);
-//            similar.push_back(394582);
-            for (int c: similar) {
-                if (c == thatId) {
-                    fprintf(stderr, "okayyyyy nesto nije u redu, taj je prosao lis\n");
-                }
-            }
             fprintf(stderr, "prostor reduciran na %d proteina u: %lf s\n", similar.size(), toSeconds(clock() - t));
             t = clock();
             int opStart = clock();
