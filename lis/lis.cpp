@@ -60,8 +60,8 @@ namespace lis {
         for (minimizer::Minimizer mini: v1) {
             int prosli = -1;
             for (auto& element: indexTable[mini.h]) {
-                if (element.sequenceIndex == prosli)
-                    continue;
+//                if (element.sequenceIndex == prosli)
+//                    continue;
 //                if (std::abs(element.position - mini.position) > 0.2 * v1.size())
 //                    continue;
                 prosli = element.sequenceIndex;

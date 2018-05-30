@@ -161,7 +161,7 @@ int main(int argc, char **argv) {
 
         clock_t qs = clock();
         for (int q = 0; q < queries.size(); q++) {
-            int reduceTo = std::min((int)dbNames.size() / 100, 1700000 / queryLength[q]);
+            int reduceTo = std::min((int)dbNames.size() / 100, 1500000 / queryLength[q]);
 
             t = clock();
             vector<minimizer::Minimizer> mins = minimizer::computeForSequence(queries[q], queryLength[q], W, K);
