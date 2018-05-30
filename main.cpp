@@ -10,11 +10,14 @@
 #include "ScoreMatrix.hpp"
 #include <ctime>
 #include <unordered_set>
+#include <cmath>
+#include <cstring>
 
 #define W 13
 #define K 4
-#define OUTPUT_RESULT 10
 #define PERC 1
+
+int OUTPUT_RESULT = 10;
 
 
 using namespace std;
@@ -55,6 +58,10 @@ int main(int argc, char **argv) {
         FASTAFILE *ffq;
         ffq = OpenFASTA(argv[2]);
         freqHashes.clear();
+
+        if (argc > 3) {
+            OUTPUT_RESULT = atoi(argv[3]);
+        }
         long long finalResult = 0;
 
 
@@ -73,8 +80,6 @@ int main(int argc, char **argv) {
         minimizer::IndexTable indexTable;
 
         clock_t t = clock();
-        //erase down this
-        int thatId;
         while (ReadFASTA(ffp, &seq, &name, &len)) {
             db.push_back(seq);
             string n = "";
@@ -156,7 +161,7 @@ int main(int argc, char **argv) {
 
         clock_t qs = clock();
         for (int q = 0; q < queries.size(); q++) {
-            int reduceTo = std::min((int)dbNames.size() / 100, 1890000 / queryLength[q]);
+            int reduceTo = std::min((int)dbNames.size() / 100, 1700000 / queryLength[q]);
 
             t = clock();
             vector<minimizer::Minimizer> mins = minimizer::computeForSequence(queries[q], queryLength[q], W, K);
@@ -258,7 +263,7 @@ int main(int argc, char **argv) {
                     }
                 }
 
-                printf("%s\t%s\t%lf\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+                printf("%s\t%s\t%.2lf\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
                        queryName[q].c_str(),
                        dbNames[similar[topScoring[i].second]].c_str(),
                        matchCnt * 100. / results[id]->alignmentLength,
