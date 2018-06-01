@@ -54,7 +54,8 @@ namespace minimizer {
                         IndexTable& indexTable);
 
     std::vector<Minimizer> computeForSequence(const char* target, int targetLen, int w, int k);
-     
+
+
 } // namespace minimizer
 
 #endif //MINIMIZER_H
