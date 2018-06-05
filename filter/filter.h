@@ -9,10 +9,10 @@
 #include <unordered_map>
 
 
-namespace lis {
+namespace filter {
 
     std::vector<int> getSimilar(std::vector<minimizer::Minimizer> v1,
-                                                 minimizer::IndexTable& indexTable, std::vector<int>& lens, int qLen, int cnt);
-} // namespace lis
+                                                 minimizer::IndexTable& indexTable, int reduceTo);
+} // namespace filter
 
 #endif //PROJEKT_LIS_H

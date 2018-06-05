@@ -2,7 +2,7 @@
 #include <unordered_map>
 #include <map>
 #include "minimizer.h"
-#include "lis.h"
+#include "filter.h"
 #include <algorithm>
 #include <vector>
 #include <cassert>
@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
                 if (freqHashes.find(mini.h) == freqHashes.end())
                     seqMin.push_back(mini);
             }
-            vector<int> similar = lis::getSimilar(seqMin, indexTable, dbLengths, queryLength[q], reduceTo);
+            vector<int> similar = filter::getSimilar(seqMin, indexTable, reduceTo);
             fprintf(stderr, "prostor reduciran na %d proteina u: %lf s\n", similar.size(), toSeconds(clock() - t));
             t = clock();
             int opStart = clock();
