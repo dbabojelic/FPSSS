@@ -43,4 +43,3 @@ cmake-build-debug/
 #ostalo
 db/
 query/
-build.sh

@@ -80,6 +80,7 @@ int main(int argc, char **argv) {
         minimizer::IndexTable indexTable;
 
         clock_t t = clock();
+        long long size = 0;
         while (ReadFASTA(ffp, &seq, &name, &len)) {
             db.push_back(seq);
             string n = "";
@@ -91,10 +92,12 @@ int main(int argc, char **argv) {
                 n += *c;
 
             }
+            size += len;
             dbNames.push_back(n);
             dbLengths.push_back(len);
             dbSeqCnt++;
         }
+        cout << dbNames.size() <<  "proteina u bazi " << size * 1. / dbNames.size() <<  endl;
 
         CloseFASTA(ffp);
 
