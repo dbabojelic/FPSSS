@@ -1,8 +1,5 @@
 # FPSSS
-Fast Protein Sequence Similarity Search
-# Projekt
-
-
+Fast Protein Sequence Similarity Search.
 C++ implementation of the tool for searching protein databases. 
 
 ## Dependencies
