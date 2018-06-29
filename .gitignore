@@ -35,6 +35,7 @@
 
 # cmake-build
 cmake-build-debug/
+build/
 
 # fasta files
 *.fasta
