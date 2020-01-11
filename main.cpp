@@ -97,8 +97,6 @@ int main(int argc, char **argv) {
             dbLengths.push_back(len);
             dbSeqCnt++;
         }
-        cout << dbNames.size() <<  "proteina u bazi " << size * 1. / dbNames.size() <<  endl;
-
         CloseFASTA(ffp);
 
         fprintf(stderr, "citanje baze od %d proteina iz faste: %lf s\n", dbSeqCnt, toSeconds(clock() - t));
@@ -163,6 +161,9 @@ int main(int argc, char **argv) {
         // za svaki query napravi redukciju baze i opal nad kandidatima
 
         clock_t qs = clock();
+        double filtering = 0;
+        double opalfunc = 0;
+        fprintf(stderr, "cijela indeksacija i sav posao napravljen u: %lf s\n", toSeconds(qs - start));
         for (int q = 0; q < queries.size(); q++) {
             int reduceTo = std::min((int)dbNames.size() / 100, 1500000 / queryLength[q]);
 
@@ -174,14 +175,19 @@ int main(int argc, char **argv) {
                     seqMin.push_back(mini);
             }
             vector<int> similar = filter::getSimilar(seqMin, indexTable, reduceTo);
-            fprintf(stderr, "prostor reduciran na %d proteina u: %lf s\n", similar.size(), toSeconds(clock() - t));
+            //sortiranje similar sekvence tako da prvo dolaze manji proteini
+            std::sort(similar.begin(), similar.end(), [&](int a, int b) {return dbLengths[a] < dbLengths[b];});
+
+            double filteringDone = toSeconds(clock() - t);
+            filtering += filteringDone;
+            fprintf(stderr, "prostor reduciran na %d proteina u: %lf s\n", similar.size(), filteringDone);
+
+
             t = clock();
             int opStart = clock();
             fprintf(stderr, "minimizera ima: %d\n", seqMin.size());
 
 
-            //sortiranje similar sekvence tako da prvo dolaze manji proteini
-            std::sort(similar.begin(), similar.end(), [&](int a, int b) {return dbLengths[a] < dbLengths[b];});
 
 
 // Query
@@ -223,7 +229,9 @@ int main(int argc, char **argv) {
                                                 results,
                                                 OPAL_SEARCH_ALIGNMENT, OPAL_MODE_SW, OPAL_OVERFLOW_SIMPLE);
 
-            fprintf(stderr, "kraj opala u: %lf s\n", toSeconds(clock() - t));
+            double opalfuncDone = toSeconds(clock() - t);
+            opalfunc += opalfuncDone;
+            fprintf(stderr, "kraj opala u: %lf s\n", opalfuncDone);
 
             t = clock();
             delete opalQuery;
@@ -288,6 +296,9 @@ int main(int argc, char **argv) {
             }
             delete results;
         }
+
+        double cijeloOdgovaranje = toSeconds(clock() - qs);
+        fprintf(stderr, "cijelo odgovaranje: %lf , filtriranje: %lf, opalfunc %lf\n", cijeloOdgovaranje, filtering, opalfunc);
 
         fprintf(stderr, "queryije odgovorio u: %lf s \n", toSeconds(clock() - qs));
         fprintf(stderr, "total kraj: %lf s \n", toSeconds(clock() - start));
