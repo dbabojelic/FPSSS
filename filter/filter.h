@@ -11,8 +11,8 @@
 
 namespace filter {
 
-    std::vector<int> getSimilar(std::vector<minimizer::Minimizer> v1,
-                                                 minimizer::IndexTable& indexTable, int reduceTo);
+    std::vector<int> getSimilar(std::vector<std::vector<minimizer::Minimizer>> v1,
+                                                 minimizer::IndexTable* indexTable, int BANDS, int reduceTo);
 } // namespace filter
 
 #endif //PROJEKT_LIS_H

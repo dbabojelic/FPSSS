@@ -11,14 +11,16 @@ using namespace std;
 
 namespace filter {
 
-    std::vector<int> getSimilar(std::vector<minimizer::Minimizer> v1, minimizer::IndexTable &indexTable, int reduceTo) {
+    std::vector<int> getSimilar(std::vector<std::vector<minimizer::Minimizer>> v1, minimizer::IndexTable *indexTable, int BANDS, int reduceTo) {
         unordered_map<int, vector<int>> NPRs;
 
-        for (minimizer::Minimizer mini: v1) {
-            int prosli = -1;
-            for (auto& element: indexTable[mini.h]) {
-                prosli = element.sequenceIndex;
-                NPRs[element.sequenceIndex].push_back(element.position - mini.position);
+        for (int band = 0; band < BANDS; band++) {
+            for (minimizer::Minimizer mini: v1[band]) {
+                int prosli = -1;
+                for (auto &element: indexTable[band][mini.h]) {
+                    prosli = element.sequenceIndex;
+                    NPRs[element.sequenceIndex].push_back(element.position - mini.position);
+                }
             }
         }
 
