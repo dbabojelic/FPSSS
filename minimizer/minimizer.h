@@ -14,7 +14,9 @@
 
 
 namespace minimizer {
-    typedef int hashType;
+    const int MOD = int(1e9) + 7;
+    typedef unsigned int hashType;
+
 
     struct Minimizer {
         hashType h;
@@ -51,9 +53,9 @@ namespace minimizer {
 
     // stavlja minimizere iz target-a u odgovarajuci vektoru u mapi hasheva
     void addMinimizers(const char* target, int targetLen, int targetIndex, int w, int k, 
-                        IndexTable& indexTable);
+                        IndexTable* indexTable, const int BANDS);
 
-    std::vector<Minimizer> computeForSequence(const char* target, int targetLen, int w, int k);
+    std::vector<std::vector<Minimizer>> computeForSequence(const char* target, int targetLen, int w, int k, const int BANDS);
 
 
 } // namespace minimizer
