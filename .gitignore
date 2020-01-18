@@ -36,6 +36,9 @@
 # cmake-build
 cmake-build-debug/
 build/
+cmake-build-release/
+build-debug/
+build-release/
 
 # fasta files
 *.fasta
@@ -44,3 +47,4 @@ build/
 #ostalo
 db/
 query/
+lshout/
