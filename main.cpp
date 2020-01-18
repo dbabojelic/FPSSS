@@ -18,6 +18,7 @@
 int W, K;
 int OUTPUT_RESULT = 10;
 int BANDS;
+int REDUCE_TO_PERC, REDUCE_TO_PER_QUERY_LEN;
 
 
 using namespace std;
@@ -54,8 +55,8 @@ double toSeconds(clock_t t) {
 }
 
 int main(int argc, char **argv) {
-    if (argc < 7) {
-        printf("Trebate unijeti 6 argumenata: db_file, query_file, best_cnt, window_size, k-mer_size, bands\n");
+    if (argc < 9) {
+        printf("Trebate unijeti 9 argumenata: db_file, query_file, best_cnt, window_size, k-mer_size, bands, reduce_to_perc, reduce_to_per_query_len\n");
         return 0;
     }
 
@@ -69,6 +70,8 @@ int main(int argc, char **argv) {
     W = atoi(argv[4]);
     K = atoi(argv[5]);
     BANDS = atoi(argv[6]);
+    REDUCE_TO_PERC = atoi(argv[7]);
+    REDUCE_TO_PER_QUERY_LEN = atoi(argv[8]);
 
     fprintf(stderr, "Ucitao sve cli argumente!\n");
 
@@ -178,8 +181,9 @@ int main(int argc, char **argv) {
     double filtering = 0;
     double opalfunc = 0;
     fprintf(stderr, "cijela indeksacija i sav posao napravljen u: %lf s\n", toSeconds(qs - start));
+    int rt = (int)dbNames.size() * REDUCE_TO_PERC / 100;
     for (int q = 0; q < queries.size(); q++) {
-        int reduceTo = std::min((int) dbNames.size() / 100, 1500000 / queryLength[q]);
+        int reduceTo = std::min(rt, REDUCE_TO_PER_QUERY_LEN / queryLength[q]);
 
         t = clock();
         vector<vector<minimizer::Minimizer>> mins = minimizer::computeForSequence(queries[q], queryLength[q], W, K, BANDS);
