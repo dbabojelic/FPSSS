@@ -12,6 +12,7 @@
 #include <unordered_set>
 #include <cmath>
 #include <cstring>
+#include "minimizer/lshbox.h"
 
 #define PERC 1
 
@@ -19,6 +20,7 @@ int W, K;
 int OUTPUT_RESULT = 10;
 int BANDS;
 int REDUCE_TO_PERC, REDUCE_TO_PER_QUERY_LEN;
+int LSH_TABLE_SIZE, NUM_OF_LSH_FUNCTIONS;
 
 
 using namespace std;
@@ -29,7 +31,7 @@ extern "C" {
 
 vector<unordered_set<int>> freqHashes;
 
-void reduceIndexTable(minimizer::IndexTable* indexTable, double p) {
+void reduceIndexTable(minimizer::IndexTable *indexTable, double p) {
     assert(p <= 100 && p >= 0);
     for (int band = 0; band < BANDS; band++) {
         int indexCnt = 0;
@@ -54,9 +56,38 @@ double toSeconds(clock_t t) {
     return ((double) t) / CLOCKS_PER_SEC;
 }
 
+void lsh_isprobavanje() {
+    lshbox::rbsLsh::Parameter params{100, 2, 7, 8, 60};
+
+    lshbox::rbsLsh hasher(params);
+
+    unsigned vec[] = {2,5,2,33,22,34,52};
+    unsigned vec2[] = {12,23,7,3,2,4,12};
+
+
+    for (int i = 0; i < 20; i++) {
+
+        vec[4] = i;
+        std:cout << hasher.getHashVal(0, vec) << " " << hasher.getHashVal(1, vec) << std::endl;
+    }
+
+    std::cout << std::endl;
+    for (int i = 0; i < 20; i++) {
+
+        vec2[4] = i;
+        std::cout << hasher.getHashVal(0, vec2) << " " << hasher.getHashVal(1, vec2) << std::endl;
+    }
+
+
+
+}
+
 int main(int argc, char **argv) {
-    if (argc < 9) {
-        printf("Trebate unijeti 9 argumenata: db_file, query_file, best_cnt, window_size, k-mer_size, bands, reduce_to_perc, reduce_to_per_query_len\n");
+
+
+    if (argc < 11) {
+        printf("Trebate unijeti 11 argumenata: db_file, query_file, best_cnt, "
+               "window_size, k-mer_size, bands, reduce_to_perc, reduce_to_per_query_len, lsh_table_size, num_of_lsh_functions\n");
         return 0;
     }
 
@@ -72,12 +103,25 @@ int main(int argc, char **argv) {
     BANDS = atoi(argv[6]);
     REDUCE_TO_PERC = atoi(argv[7]);
     REDUCE_TO_PER_QUERY_LEN = atoi(argv[8]);
+    LSH_TABLE_SIZE = atoi(argv[9]);
+    NUM_OF_LSH_FUNCTIONS = atoi(argv[10]);
+    assert(K % BANDS == 0);
 
     fprintf(stderr, "Ucitao sve cli argumente!\n");
 
     freqHashes.resize(BANDS);
 
     long long finalResult = 0;
+
+    // configure LSH HASHER
+
+    /// Hash table size
+    /// Number of hash tables
+    /// Dimension of the vector, it can be obtained from the instance of Matrix
+    /// Binary code bytes
+    /// The Difference between upper and lower bound of each dimension
+    lshbox::rbsLsh::Parameter params{LSH_TABLE_SIZE, NUM_OF_LSH_FUNCTIONS, K / BANDS, 64, 10};
+    lshbox::rbsLsh lsh_hasher(params);
 
 
     char *seq, *name;
@@ -92,7 +136,7 @@ int main(int argc, char **argv) {
     vector<string> queryName;
     vector<int> queryLength;
 
-    minimizer::IndexTable* indexTable = new minimizer::IndexTable[BANDS];
+    minimizer::IndexTable *indexTable = new minimizer::IndexTable[BANDS];
 
     clock_t t = clock();
     long long size = 0;
@@ -117,7 +161,7 @@ int main(int argc, char **argv) {
     fprintf(stderr, "citanje baze od %d proteina iz faste: %lf s\n", dbSeqCnt, toSeconds(clock() - t));
     t = clock();
     for (int i = 0; i < dbSeqCnt; i++) {
-        minimizer::addMinimizers(db[i], dbLengths[i], i, W, K, indexTable, BANDS);
+        minimizer::addMinimizers(db[i], dbLengths[i], i, W, K, indexTable, BANDS, lsh_hasher);
     }
     fprintf(stderr, "indeksacija baze: %lf s\n", toSeconds(clock() - t));
     t = clock();
@@ -181,12 +225,13 @@ int main(int argc, char **argv) {
     double filtering = 0;
     double opalfunc = 0;
     fprintf(stderr, "cijela indeksacija i sav posao napravljen u: %lf s\n", toSeconds(qs - start));
-    int rt = (int)dbNames.size() * REDUCE_TO_PERC / 100;
+    int rt = (int) dbNames.size() * REDUCE_TO_PERC / 100;
     for (int q = 0; q < queries.size(); q++) {
         int reduceTo = std::min(rt, REDUCE_TO_PER_QUERY_LEN / queryLength[q]);
 
         t = clock();
-        vector<vector<minimizer::Minimizer>> mins = minimizer::computeForSequence(queries[q], queryLength[q], W, K, BANDS);
+        vector<vector<minimizer::Minimizer>> mins = minimizer::computeForSequence(queries[q], queryLength[q], W, K,
+                                                                                  BANDS, lsh_hasher);
         vector<vector<minimizer::Minimizer>> seqMin(BANDS, vector<minimizer::Minimizer>());
         for (int band = 0; band < BANDS; band++) {
             for (minimizer::Minimizer mini: mins[band]) {
@@ -261,7 +306,8 @@ int main(int argc, char **argv) {
         delete opalDb;
 
 // Print scores
-        vector<pair<int, int>> topScoring;
+        vector<pair < int, int>>
+        topScoring;
         for (int i = 0; i < similar.size(); i++) {
             topScoring.push_back({results[i]->score, i});
         }

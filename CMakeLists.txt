@@ -17,9 +17,9 @@ add_subdirectory(filter)
 include_directories(${PROJECT_SOURCE_DIR}/opal)
 add_subdirectory(opal)
 
-
 add_executable(FPSSS main.cpp)
 target_link_libraries(${PROJECT_NAME} minimizer)
 target_link_libraries(${PROJECT_NAME} fasta)
 target_link_libraries(${PROJECT_NAME} filter)
 target_link_libraries(${PROJECT_NAME} opal)
+

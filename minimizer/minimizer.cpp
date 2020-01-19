@@ -26,7 +26,7 @@ namespace {
     const int FYW = 7;
     const int P = 8;
     const int ST = 9;
-    const int OTHER = 10000;
+    const int OTHER = 10;
 
     const int murphy[] = {A, OTHER, C, EDNQ, EDNQ, FYW, G, H, ILVM, OTHER, KR, ILVM, ILVM, EDNQ, OTHER, P, EDNQ, KR, ST,
                           ST,
@@ -44,18 +44,24 @@ namespace {
     }
 
     void insertInIndexTables(minimizer::IndexTable *indexTables, const int BANDS, int k, int targetIndex, int position,
-                             const char *target) {
+                             const char *target, lshbox::rbsLsh &lsh_hasher) {
         assert(k % BANDS == 0);
         const int BAND_SIZE = k / BANDS;
+        unsigned *vec = new unsigned[BAND_SIZE * sizeof(unsigned)];
         for (int band = 0; band < BANDS; band++) {
             minimizer::hashType tmp_hash = 0;
 
             int start = position + band * BAND_SIZE;
             int end = position + band * BAND_SIZE + BAND_SIZE;
+            int i = 0;
             for (int pos = start; pos < end; pos++) {
-                tmp_hash *= BASE;
-                tmp_hash += value(target[pos]);
+                vec[i] = value(target[pos]);
+                i++;
+//                tmp_hash *= BASE;
+//                tmp_hash += value(target[pos]);
             }
+
+            tmp_hash = lsh_hasher.getHashVal(0, vec);
 
             if (tmp_hash < indexTables[band].size())
                 indexTables[band][tmp_hash].push_back(minimizer::Index(targetIndex, position));
@@ -64,13 +70,13 @@ namespace {
     }
 
     void processState(std::deque<minimizer::Minimizer> &dq, minimizer::IndexTable *indexTable, const int BANDS,
-                      int targetIndex, int &lastPositionTaken, int k, const char *target) {
+                      int targetIndex, int &lastPositionTaken, int k, const char *target, lshbox::rbsLsh &lsh_hasher) {
         minimizer::Minimizer front = dq.front();
         dq.pop_front();
 
         if (lastPositionTaken < front.position) {
 //            indexTable[front.h].push_back(minimizer::Index(targetIndex, front.position));
-            insertInIndexTables(indexTable, BANDS, k, targetIndex, front.position, target);
+            insertInIndexTables(indexTable, BANDS, k, targetIndex, front.position, target, lsh_hasher);
             lastPositionTaken = front.position;
         }
         while (!dq.empty() && dq.front().h == front.h) {
@@ -78,7 +84,7 @@ namespace {
             dq.pop_front();
             if (lastPositionTaken < front.position) {
 //                indexTable[front.h].push_back(minimizer::Index(targetIndex, front.position));
-                insertInIndexTables(indexTable, BANDS, k, targetIndex, front.position, target);
+                insertInIndexTables(indexTable, BANDS, k, targetIndex, front.position, target, lsh_hasher);
                 lastPositionTaken = front.position;
             }
         }
@@ -118,7 +124,7 @@ namespace minimizer {
 
 
     void addMinimizers(const char *target, int targetLen, int targetIndex, int w, int k,
-                       IndexTable *indexTable, const int BANDS) {
+                       IndexTable *indexTable, const int BANDS, lshbox::rbsLsh &lsh_hasher) {
         int n = targetLen;
 
         assert(k % BANDS == 0);
@@ -132,9 +138,9 @@ namespace minimizer {
         if (n < k + w - 1) {//ne postoji ni jedan window od w kmera
             w = n - k + 1; // smanji velicinu trazenog prozora na najvise sta mozes, da se nadje barem jedan minimizer
         }
-        hashType maxHashes = 1;
-        for (int i = 0; i < BAND_SIZE; i++)
-            maxHashes *= BASE;
+        hashType maxHashes = lsh_hasher.getParameters().M;
+//        for (int i = 0; i < BAND_SIZE; i++)
+//            maxHashes *= BASE;
 
         for (int i = 0; i < BANDS; i++) {
             while (indexTable[i].size() < maxHashes) {
@@ -174,13 +180,13 @@ namespace minimizer {
             tmpHash = modAdd(tmpHash, value(target[i + k]));
         }
 
-        processState(dqMin, indexTable, BANDS, targetIndex, lastPositionTaken, k, target);
+        processState(dqMin, indexTable, BANDS, targetIndex, lastPositionTaken, k, target, lsh_hasher);
 
         for (int i = w; i < n - k + 1; i++) {
             pop(i - w, dqMin);
             Minimizer mp1(tmpHash, i);
             push(mp1, dqMin);
-            processState(dqMin, indexTable, BANDS, targetIndex, lastPositionTaken, k, target);
+            processState(dqMin, indexTable, BANDS, targetIndex, lastPositionTaken, k, target, lsh_hasher);
 
             tmpHash = modSub(tmpHash, modMul(lastPower, value(target[i])));
             tmpHash = modMul(tmpHash, BASE);
@@ -189,9 +195,9 @@ namespace minimizer {
     }
 
     std::vector<std::vector<Minimizer>>
-    computeForSequence(const char *target, int targetLen, int w, int k, const int BANDS) {
+    computeForSequence(const char *target, int targetLen, int w, int k, const int BANDS, lshbox::rbsLsh &lsh_hasher) {
         IndexTable* table = new IndexTable[BANDS];
-        addMinimizers(target, targetLen, -1, w, k, table, BANDS);
+        addMinimizers(target, targetLen, -1, w, k, table, BANDS, lsh_hasher);
         vector<vector<Minimizer>> ret (BANDS, vector<Minimizer>());
 
 

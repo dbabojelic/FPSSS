@@ -10,11 +10,12 @@
 #include <map>
 #include <unordered_map>
 #include <vector>
-
+#include "lshbox.h"
 
 
 namespace minimizer {
     const int MOD = int(1e9) + 7;
+
     typedef unsigned int hashType;
 
 
@@ -49,13 +50,14 @@ namespace minimizer {
 
     };
 
-    typedef std::vector<std::vector<minimizer::Index>> IndexTable;
+    typedef std::vector<std::vector<minimizer::Index>> IndexTable; // indexes for some hash
+
 
     // stavlja minimizere iz target-a u odgovarajuci vektoru u mapi hasheva
     void addMinimizers(const char* target, int targetLen, int targetIndex, int w, int k, 
-                        IndexTable* indexTable, const int BANDS);
+                        IndexTable* indexTable, const int BANDS, lshbox::rbsLsh& lsh_hasher);
 
-    std::vector<std::vector<Minimizer>> computeForSequence(const char* target, int targetLen, int w, int k, const int BANDS);
+    std::vector<std::vector<Minimizer>> computeForSequence(const char* target, int targetLen, int w, int k, const int BANDS, lshbox::rbsLsh& lsh_hasher);
 
 
 } // namespace minimizer
