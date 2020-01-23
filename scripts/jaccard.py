@@ -5,7 +5,7 @@ import sys, csv
 should = False
 dircnt = {}
 
-def read_csv(dst, path):
+def read_csv(dst, path, granica):
     with open(path, 'r') as f:
         r = csv.reader(f, delimiter='\t')
         last0 = ""
@@ -19,7 +19,6 @@ def read_csv(dst, path):
                 if not should:
                     dircnt[row[0]] = 1
                 cnt = 1
-            granica = int(sys.argv[3])
             if should:
                 d = 0
                 if row[0] in dircnt:
@@ -29,16 +28,25 @@ def read_csv(dst, path):
                 dst.append((row[0], row[1]))
             last0 = row[0]
 
-a = []
-read_csv(a, sys.argv[1])
 
-b = []
-should = True
-read_csv(b, sys.argv[2])
-print ("testing first " + str(sys.argv[3]))
-print ("blast out first")
-print(len(set(a)))
-print(len(set(b)))
-print(len(set(a) & set(b)))
+def jacc(tresh):
+    should = False
+    a = []
+    read_csv(a, sys.argv[1], tresh)
 
-print(float(len(set(a) & set(b))) / len(set(a) | set(b)))
+    b = []
+    should = True
+    read_csv(b, sys.argv[2], tresh)
+    # print ("testing first " + str(sys.argv[3]))
+    # print ("blast out first")
+    # print(len(set(a)))
+    # print(len(set(b)))
+    # print(len(set(a) & set(b)))
+
+    return float(len(set(a) & set(b))) / len(set(a) | set(b))
+
+
+ts = [1,2,3,4,5,6,9,15,25,35, 60, 80, 100]
+
+for t in ts:
+    print("(" + str(t) + ", " + str(jacc(t)) + ")")
